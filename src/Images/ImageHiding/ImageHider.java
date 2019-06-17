@@ -9,8 +9,7 @@ import java.util.ArrayList;
 public class ImageHider {
 
     //Metoda przyjmuje liste obrazków a następnie wrzuca je do pliku podanego jako argument location
-    //Powinno dzialac
-    public void hideImages(ArrayList<File> files, String location, String password) {
+    public static void hideImages(ArrayList<File> files, String location, String password) {
         ArrayList<Image> imageList = new ArrayList<>();
 
         for (File file : files) {
@@ -32,12 +31,12 @@ public class ImageHider {
             System.out.println("Object has been serialized");
         } catch (IOException ex) {
             System.out.println("IOException is caught");
+            ex.printStackTrace();
         }
     }
 
     //Metoda przyjmuje plik w którym ukryte są obrazki a następnie rozpakowuje je do podanego folderu
-    //nie skonczone
-    public void showImages(File file, String location, String password) throws WrongPasswordException {
+    public static void showImages(File file, String location, String password) throws WrongPasswordException {
         ArrayList<File> files = new ArrayList<>();
         Images images = null;
         try {
@@ -55,7 +54,7 @@ public class ImageHider {
                 throw new WrongPasswordException();
 
             for (Image image: images.getImages()){
-
+                files.add(Encryption.decrypt(image.getImage(), location, image.getName()));
             }
 
         } catch (IOException ex) {
@@ -63,9 +62,5 @@ public class ImageHider {
         } catch (ClassNotFoundException ex) {
             System.out.println("ClassNotFoundException is caught");
         }
-
-
-
-
     }
 }

@@ -1,6 +1,8 @@
 package Images.ImageClasses;
 
-public class Image {
+import java.io.Serializable;
+
+public class Image implements Serializable {
     private String image;
     private String name;
 
