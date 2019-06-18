@@ -37,13 +37,12 @@ public class ImageHider {
             System.out.println("Object has been serialized");
         } catch (IOException ex) {
             System.out.println("IOException is caught");
-            ex.printStackTrace();
         }
     }
 
     //Metoda przyjmuje plik w którym ukryte są obrazki a następnie rozpakowuje je do podanego folderu
     public static void showImages(File file, String location, String password) throws WrongPasswordException {
-        Images images = null;
+        Images images;
         try {
             // Reading the object from a file
             FileInputStream fileIn = new FileInputStream(file);

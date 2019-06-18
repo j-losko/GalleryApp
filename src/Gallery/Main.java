@@ -1,5 +1,6 @@
 package Gallery;
 
+import Images.ImageClasses.ImagesToBeHidden;
 import Images.ImageHiding.WrongPasswordException;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -20,7 +21,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-
+import java.util.List;
 
 public class Main extends Application {
 
@@ -54,10 +55,35 @@ public class Main extends Application {
         gridpane.setHgap(10);
         gridpane.setVgap(10);
 
-        File[] allSubFiles = currentFolder.listFiles();
+        final List<Images.ImageClasses.ImagesToBeHidden> filesToBeHidden = new ArrayList<>();
+
+        final File[] allSubFiles = currentFolder.listFiles();
 
         int column = 0;
         int row = 0;
+
+        final Button hideImage = new Button();
+        hideImage.setGraphic(new ImageView(lockImage));
+        hideImage.setOnAction(value -> {
+            System.out.println("Navigate to hide multiple images");
+            final ArrayList<File> imagesToHide = new ArrayList<>();
+            for (Images.ImageClasses.ImagesToBeHidden imageToBeHidden : filesToBeHidden) {
+                if (imageToBeHidden.getCheckbox().isSelected()) {
+                    imagesToHide.add(imageToBeHidden.getFile());
+                }
+            }
+            if (!imagesToHide.isEmpty()) {
+                hideImages(imagesToHide, currentFolder + "\\");
+            } else {
+                final Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("No images selected!");
+                alert.setHeaderText(null);
+                alert.setContentText("No images selected to be hidden!");
+                alert.showAndWait();
+            }
+        });
+        final VBox hideImageVBox = new VBox(hideImage, new Text("Hide images"));
+        gridpane.add(hideImageVBox, column, row++);
 
         if (currentFolder.getParent() != null) {
             final Button buttonUp = new Button();
@@ -74,8 +100,7 @@ public class Main extends Application {
             return;
         }
         for (File file : allSubFiles) {
-            final Text text = new Text(file.getName());
-            text.setWrappingWidth(64);
+            final VBox checkboxVBox = new VBox();
             final Button button = new Button();
 
             if (file.isDirectory()) {
@@ -104,6 +129,9 @@ public class Main extends Application {
                                 System.out.println("Open image: " + file.getName());
                                 showImage(file, scene);
                             });
+                            final CheckBox checkBox = new CheckBox();
+                            filesToBeHidden.add(new ImagesToBeHidden(file, checkBox));
+                            checkboxVBox.getChildren().add(checkBox);
                         } catch (Exception e) {
                             button.setGraphic(new ImageView(brokenImage));
                         }
@@ -122,7 +150,12 @@ public class Main extends Application {
                 }
             }
 
-            gridpane.add(new VBox(button, text), column++, row);
+            final Text text = new Text(file.getName());
+            text.setWrappingWidth(64);
+
+            checkboxVBox.getChildren().add(text);
+
+            gridpane.add(new VBox(button, checkboxVBox), column++, row);
 
             if (column >= 10) {
                 column = 0;
@@ -166,7 +199,9 @@ public class Main extends Application {
         hideImage.setGraphic(new ImageView(lockImage));
         hideImage.setOnAction(value -> {
             System.out.println("Navigate to hide single image");
-            hideSingleImage(imageFile);
+            final ArrayList<File> imagesToHide = new ArrayList<>();
+            imagesToHide.add(imageFile);
+            hideImages(imagesToHide, imageFile.getParent() + "\\");
         });
         final VBox hideImageVBox = new VBox(hideImage, new Text("Hide image"));
 
@@ -188,7 +223,7 @@ public class Main extends Application {
         stage.show();
     }
 
-    private void hideSingleImage(File imageFile) {
+    private void hideImages(ArrayList<File> imagesToHide, String location) {
         final Group root = new Group();
         final Scene scene = new Scene(root, 800, 600, Color.WHITE);
         stage.setScene(scene);
@@ -203,10 +238,8 @@ public class Main extends Application {
         hideImage.setGraphic(new ImageView(lockImage));
         hideImage.setOnAction(value -> {
             System.out.println("Ukryj obrazek");
-            final ArrayList<File> imageToHide = new ArrayList<>();
-            imageToHide.add(imageFile);
-            System.out.println(imageFile.getParent() + passwordField.getText());
-            Images.ImageHiding.ImageHider.hideImages(imageToHide, (imageFile.getParent() + "\\" + hiddenFileName.getText() + ".hidden"), passwordField.getText());
+            System.out.println(location + hiddenFileName.getText() + ".hidden    " + passwordField.getText());
+            Images.ImageHiding.ImageHider.hideImages(imagesToHide, (location + hiddenFileName.getText() + ".hidden"), passwordField.getText());
             showFolder(currentFolder);
         });
 
@@ -221,10 +254,10 @@ public class Main extends Application {
     }
 
     private void unhideImages(File file) {
-        //TODO modal maybe?
         final Stage unlockStage = new Stage();
         unlockStage.initModality(Modality.APPLICATION_MODAL);
         unlockStage.initOwner(stage);
+
         final VBox vbox = new VBox(20);
         vbox.getChildren().add(new Text("Wpisz hasło:"));
 
@@ -238,8 +271,8 @@ public class Main extends Application {
                 Images.ImageHiding.ImageHider.showImages(file, file.getParent() + "\\", passwordField.getText());
                 showFolder(currentFolder);
                 unlockStage.close();
-            } catch(WrongPasswordException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
+            } catch (WrongPasswordException ex) {
+                final Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Wrong password!");
                 alert.setHeaderText(null);
                 alert.setContentText("Wrong password!");
