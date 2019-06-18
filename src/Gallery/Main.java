@@ -13,6 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -24,11 +25,12 @@ import java.util.ArrayList;
 public class Main extends Application {
 
     private Stage stage;
-    private Image folderImage;
-    private Image fileImage;
-    private Image brokenImage;
-    private Image lockImage;
-    private Image unlockImage;
+    private final Image folderImage = new Image(Main.class.getResourceAsStream("imgs/folder.png"));
+    private final Image fileImage = new Image(Main.class.getResourceAsStream("imgs/file.png"));
+    private final Image brokenImage = new Image(Main.class.getResourceAsStream("imgs/broken.png"));
+    private final Image lockImage = new Image(Main.class.getResourceAsStream("imgs/lock.png"));
+    private final Image unlockImage = new Image(Main.class.getResourceAsStream("imgs/unlock.png"));
+    private File currentFolder;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -36,24 +38,18 @@ public class Main extends Application {
         stage.setTitle("Gallery");
         stage.setResizable(false);
 
-        folderImage = new Image(Main.class.getResourceAsStream("imgs/folder.png"));
-        fileImage = new Image(Main.class.getResourceAsStream("imgs/file.png"));
-        brokenImage = new Image(Main.class.getResourceAsStream("imgs/broken.png"));
-        lockImage = new Image(Main.class.getResourceAsStream("imgs/lock.png"));
-        unlockImage = new Image(Main.class.getResourceAsStream("imgs/unlock.png"));
-
         Path currentPath = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        File currentFolder = new File(currentPath.toString());
+        currentFolder = new File(currentPath.toString());
 
         showFolder(currentFolder);
     }
 
     private void showFolder(File currentFolder) {
-        Group root = new Group();
-        Scene scene = new Scene(root, 800, 600, Color.WHITE);
+        final Group root = new Group();
+        final Scene scene = new Scene(root, 800, 600, Color.WHITE);
         stage.setScene(scene);
 
-        GridPane gridpane = new GridPane();
+        final GridPane gridpane = new GridPane();
         gridpane.setPadding(new Insets(30, 10, 10, 10));
         gridpane.setHgap(10);
         gridpane.setVgap(10);
@@ -64,11 +60,12 @@ public class Main extends Application {
         int row = 0;
 
         if (currentFolder.getParent() != null) {
-            Button buttonUp = new Button();
+            final Button buttonUp = new Button();
             buttonUp.setGraphic(new ImageView(folderImage));
             buttonUp.setOnAction(value -> {
                 System.out.println("Folder do góry: " + currentFolder.getParent());
-                showFolder(currentFolder.getParentFile());
+                this.currentFolder = currentFolder.getParentFile();
+                showFolder(this.currentFolder);
             });
             gridpane.add(new VBox(buttonUp, new Text("../")), column++, row);
         }
@@ -77,15 +74,16 @@ public class Main extends Application {
             return;
         }
         for (File file : allSubFiles) {
-            Text text = new Text(file.getName());
+            final Text text = new Text(file.getName());
             text.setWrappingWidth(64);
-            Button button = new Button();
+            final Button button = new Button();
 
             if (file.isDirectory()) {
                 button.setGraphic(new ImageView(folderImage));
                 button.setOnAction(value -> {
                     System.out.println("Navigate to: " + file.getName());
-                    showFolder(file);
+                    this.currentFolder = file;
+                    showFolder(this.currentFolder);
                 });
             } else {
                 String extension = "";
@@ -100,7 +98,7 @@ public class Main extends Application {
                     case "jpeg":
                     case "png":
                         try {
-                            Image thumbnail = new Image(file.toURI().toString(), 48, 48, false, true);
+                            final Image thumbnail = new Image(file.toURI().toString(), 48, 48, false, true);
                             button.setGraphic(new ImageView(thumbnail));
                             button.setOnAction(value -> {
                                 System.out.println("Open image: " + file.getName());
@@ -114,7 +112,7 @@ public class Main extends Application {
                         button.setGraphic(new ImageView(unlockImage));
                         button.setOnAction(value -> {
                             System.out.println("Unlock image: " + file.getName());
-                            unhideImages(file, "asd"); //TODO żeby okienko z passwordem się pojawiało
+                            unhideImages(file);
                         });
                         break;
                     default:
@@ -132,7 +130,7 @@ public class Main extends Application {
             }
         }
 
-        ScrollPane scrollPane = new ScrollPane(gridpane);
+        final ScrollPane scrollPane = new ScrollPane(gridpane);
 
         scrollPane.setPrefSize(800, 600);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
@@ -144,42 +142,42 @@ public class Main extends Application {
     }
 
     private void showImage(File imageFile, Scene oldScene) {
-        Group root = new Group();
-        Scene scene = new Scene(root, 800, 600, Color.WHITE);
+        final Group root = new Group();
+        final Scene scene = new Scene(root, 800, 600, Color.WHITE);
         stage.setScene(scene);
 
-        GridPane gridpane = new GridPane();
+        final GridPane gridpane = new GridPane();
         gridpane.setPadding(new Insets(5, 10, 10, 10));
 
-        Image image = new Image(imageFile.toURI().toString());
-        ImageView imageView = new ImageView(image);
+        final Image image = new Image(imageFile.toURI().toString());
+        final ImageView imageView = new ImageView(image);
 
-        Text filePathText = new Text(10, 0, imageFile.getAbsolutePath());
+        final Text filePathText = new Text(10, 0, imageFile.getAbsolutePath());
 
-        Button buttonUp = new Button();
+        final Button buttonUp = new Button();
         buttonUp.setGraphic(new ImageView(folderImage));
         buttonUp.setOnAction(value -> {
             System.out.println("Wróć do widoku galerii");
             stage.setScene(oldScene);
         });
-        VBox goToGalleryVBox = new VBox(buttonUp, new Text("../"));
+        final VBox goToGalleryVBox = new VBox(buttonUp, new Text("../"));
 
-        Button hideImage = new Button();
+        final Button hideImage = new Button();
         hideImage.setGraphic(new ImageView(lockImage));
         hideImage.setOnAction(value -> {
             System.out.println("Navigate to hide single image");
-            hideSingleImage(imageFile, oldScene);
+            hideSingleImage(imageFile);
         });
-        VBox hideImageVBox = new VBox(hideImage, new Text("Hide image"));
+        final VBox hideImageVBox = new VBox(hideImage, new Text("Hide image"));
 
-        HBox hbox = new HBox(goToGalleryVBox, hideImageVBox);
+        final HBox hbox = new HBox(goToGalleryVBox, hideImageVBox);
         hbox.setSpacing(20);
 
-        VBox vbox = new VBox(filePathText, hbox, imageView);
+        final VBox vbox = new VBox(filePathText, hbox, imageView);
         vbox.setSpacing(10);
         gridpane.add(vbox, 0, 0);
 
-        ScrollPane scrollPane = new ScrollPane(gridpane);
+        final ScrollPane scrollPane = new ScrollPane(gridpane);
 
         scrollPane.setPannable(true);
         scrollPane.setPrefSize(800, 600);
@@ -190,46 +188,69 @@ public class Main extends Application {
         stage.show();
     }
 
-    private void hideSingleImage(File imageFile, Scene oldScene) {
-        Group root = new Group();
-        Scene scene = new Scene(root, 800, 600, Color.WHITE);
+    private void hideSingleImage(File imageFile) {
+        final Group root = new Group();
+        final Scene scene = new Scene(root, 800, 600, Color.WHITE);
         stage.setScene(scene);
         stage.setTitle("Hide image");
 
-        VBox dialogVBox = new VBox(20);
+        final VBox vbox = new VBox(20);
 
         final PasswordField passwordField = new PasswordField();
         final TextField hiddenFileName = new TextField();
 
-        Button hideImage = new Button();
+        final Button hideImage = new Button();
         hideImage.setGraphic(new ImageView(lockImage));
         hideImage.setOnAction(value -> {
             System.out.println("Ukryj obrazek");
-            ArrayList<File> imageToHide = new ArrayList<>();
+            final ArrayList<File> imageToHide = new ArrayList<>();
             imageToHide.add(imageFile);
             System.out.println(imageFile.getParent() + passwordField.getText());
             Images.ImageHiding.ImageHider.hideImages(imageToHide, (imageFile.getParent() + "\\" + hiddenFileName.getText() + ".hidden"), passwordField.getText());
-            stage.setScene(oldScene);
+            showFolder(currentFolder);
         });
 
-        Button cancel = new Button();
+        final Button cancel = new Button();
         cancel.setText("Cancel");
-        cancel.setOnAction(value -> stage.setScene(oldScene));
+        cancel.setOnAction(value -> showFolder(currentFolder));
 
-        dialogVBox.getChildren().addAll(new Text("Password"), passwordField, new Text("Hidden file name"), hiddenFileName, hideImage, cancel);
+        vbox.getChildren().addAll(new Text("Password"), passwordField, new Text("Hidden file name"), hiddenFileName, hideImage, cancel);
 
-        root.getChildren().add(dialogVBox);
+        root.getChildren().add(vbox);
         stage.show();
     }
 
-    private void unhideImages(File file, String password) {
+    private void unhideImages(File file) {
         //TODO modal maybe?
+        final Stage unlockStage = new Stage();
+        unlockStage.initModality(Modality.APPLICATION_MODAL);
+        unlockStage.initOwner(stage);
+        final VBox vbox = new VBox(20);
+        vbox.getChildren().add(new Text("Wpisz hasło:"));
 
-        try {
-            Images.ImageHiding.ImageHider.showImages(file, file.getParent() + "\\", password);
-        } catch(WrongPasswordException ex) {
-            //TODO zły password
-        }
+        final PasswordField passwordField = new PasswordField();
+        vbox.getChildren().add(passwordField);
+
+        final Button button = new Button();
+        button.setText("OK");
+        button.setOnAction(value -> {
+            try {
+                Images.ImageHiding.ImageHider.showImages(file, file.getParent() + "\\", passwordField.getText());
+                showFolder(currentFolder);
+                unlockStage.close();
+            } catch(WrongPasswordException ex) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Wrong password!");
+                alert.setHeaderText(null);
+                alert.setContentText("Wrong password!");
+                alert.showAndWait();
+            }
+        });
+        vbox.getChildren().add(button);
+
+        final Scene unlockScene = new Scene(vbox, 300, 200);
+        unlockStage.setScene(unlockScene);
+        unlockStage.show();
     }
 
     public static void main(String[] args) {

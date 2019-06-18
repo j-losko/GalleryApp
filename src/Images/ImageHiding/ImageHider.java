@@ -4,6 +4,7 @@ import Images.ImageClasses.Image;
 import Images.ImageClasses.Images;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class ImageHider {
@@ -28,6 +29,11 @@ public class ImageHider {
             out.close();
             file.close();
 
+            // the images were saved in the hidden file - only now can we delete them:
+            for (File f : files) {
+                Files.delete(f.toPath());
+            }
+
             System.out.println("Object has been serialized");
         } catch (IOException ex) {
             System.out.println("IOException is caught");
@@ -37,7 +43,6 @@ public class ImageHider {
 
     //Metoda przyjmuje plik w którym ukryte są obrazki a następnie rozpakowuje je do podanego folderu
     public static void showImages(File file, String location, String password) throws WrongPasswordException {
-        ArrayList<File> files = new ArrayList<>();
         Images images = null;
         try {
             // Reading the object from a file
@@ -53,9 +58,11 @@ public class ImageHider {
             if (!images.getPassword().equals(password))
                 throw new WrongPasswordException();
 
-            for (Image image: images.getImages()){
-                files.add(Encryption.decrypt(image.getImage(), location, image.getName()));
+            for (Image image : images.getImages()) {
+                Encryption.decrypt(image.getImage(), location, image.getName());
             }
+
+            Files.delete(file.toPath());
 
         } catch (IOException ex) {
             System.out.println("IOException is caught");
